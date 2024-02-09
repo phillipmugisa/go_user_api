@@ -53,13 +53,13 @@ func (cd *CustomDate) Scan(value interface{}) error {
 }
 
 func (u *User) Validate() *types.ApiError {
-	// check if user data passed required checks
+	// necesssary data checks
 	return nil
 }
 
-// generates verofication code
+// generates verification code
 func (u *User) GenerateCode() string {
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	part1 := rand.Intn(1000)
 	part2 := rand.Intn(1000)

@@ -19,6 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	err = store.SetUpDB()
 	if err != nil {
 		log.Fatal(err)

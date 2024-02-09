@@ -11,8 +11,9 @@ import (
 )
 
 type Storage interface {
-	GetUser(string) ([]*data.User, error)
+	GetUser(params ...string) ([]*data.User, error)
 	CreateUser(*data.User) ([]*data.User, error)
+	DeleteUser(*data.User) error
 	CompleteUserCheck(string) ([]*data.User, error)
 }
 
@@ -25,6 +26,7 @@ func NewPostgresStorage() (*PostgresStorage, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("Database Connection Successful...")
 	return &PostgresStorage{
 		db: db,
 	}, nil
@@ -41,7 +43,6 @@ func initDB() (*sql.DB, error) {
 	dbUrl := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		HOST, PORT, username, password, database)
 
-	fmt.Println("dbUrl: ", dbUrl)
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		fmt.Println("ERROR: ", err)
@@ -55,6 +56,7 @@ func initDB() (*sql.DB, error) {
 	return db, nil
 }
 
+// create required tables in db: Users
 func (s *PostgresStorage) SetUpDB() error {
 	query := `CREATE TABLE IF NOT EXISTS Users (
 		ID SERIAL PRIMARY KEY,
@@ -75,9 +77,19 @@ func (s *PostgresStorage) SetUpDB() error {
 	return err
 }
 
-func (s *PostgresStorage) GetUser(username string) ([]*data.User, error) {
-	query := `SELECT username, email, code FROM Users WHERE username = $1`
-	rows, err := s.db.Query(query, username)
+func (s *PostgresStorage) GetUser(params ...string) ([]*data.User, error) {
+	username := params[0]
+	email := "email"
+	if len(params) == 2 {
+		email = params[1]
+	}
+
+	if username == "" && email == "" {
+		return nil, errors.New("Pass either username or email")
+	}
+
+	query := `SELECT username, email, code FROM Users WHERE username = $1 OR email = $2`
+	rows, err := s.db.Query(query, username, email)
 	if err != nil {
 		return nil, err
 	}
@@ -116,6 +128,15 @@ func (s *PostgresStorage) CompleteUserCheck(username string) ([]*data.User, erro
 		return nil, err
 	}
 	return s.GetUser(username)
+}
+
+func (s *PostgresStorage) DeleteUser(u *data.User) error {
+	query := `DELETE FROM TABLE Users WHERE username = $1`
+	_, err := s.db.Query(query, u.UserName)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func scanUsers(rows *sql.Rows) ([]*data.User, error) {
