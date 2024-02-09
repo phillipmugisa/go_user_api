@@ -9,10 +9,11 @@ Go implementation of an user account management api
 - Usage: 
 
 ```bash
-    git clone github.com/phillipmugisa/go_user_api
+    git clone https://github.com/phillipmugisa/go_user_api.git
 
     cd go_user_api
 
+    docker-compose build
     docker-compose up
 ```
 
