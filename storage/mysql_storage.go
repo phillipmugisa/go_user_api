@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -31,12 +32,12 @@ func NewMySqlStorage() (*MySqlStorage, error) {
 
 func initDB() (*sql.DB, error) {
 	// make db connection
-	dbUrl := os.Getenv("DB_URL")
-	if dbUrl == "" {
-		return nil, errors.New("DB_URL not set.")
-	}
+	dbUrl := GetConnectionString()
+
+	fmt.Println("dbUrl: ", dbUrl)
 	db, err := sql.Open("mysql", dbUrl)
 	if err != nil {
+		fmt.Println("ERROR: ", err)
 		return nil, errors.New("Couldnot connect to database")
 	}
 
@@ -126,4 +127,34 @@ func scanUsers(rows *sql.Rows) ([]*data.User, error) {
 		users = append(users, user)
 	}
 	return users, nil
+}
+
+func GetConnectionString() string {
+	host := os.Getenv("DB_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+
+	port := os.Getenv("DB_PORT")
+	if port == "" {
+		port = "3306"
+	}
+
+	user := os.Getenv("DB_USER")
+	if user == "" {
+		user = "root"
+	}
+
+	password := os.Getenv("DB_PASS")
+	if password == "" {
+		password = "@root"
+	}
+
+	dbName := os.Getenv("DB_NAME")
+	if dbName == "" {
+		dbName = "apiserver"
+	}
+
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		user, password, host, port, dbName)
 }
