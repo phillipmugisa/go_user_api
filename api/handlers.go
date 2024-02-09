@@ -53,7 +53,7 @@ func (s *ApiServer) handleCreateUser(w http.ResponseWriter, r *http.Request) *ty
 	}
 
 	// check if user exists with submit data
-	results, s_err := s.store.GetUser(user.UserName, user.Email)
+	results, s_err := s.store.GetUsers(user.UserName, user.Email)
 	if s_err != nil {
 		return &types.ApiError{
 			Message: "Internal Server Error(an error for all unforeseen situations)",
@@ -128,7 +128,7 @@ func (s *ApiServer) handleUserVerification(w http.ResponseWriter, r *http.Reques
 	}
 
 	// get user with passed user and compare codes
-	results, fetch_err := s.store.GetUser(req_data.Username)
+	results, fetch_err := s.store.GetUsers(req_data.Username)
 	if fetch_err != nil {
 		return &types.ApiError{
 			Message: "Internal Server Error(an error for all unforeseen situations)",

@@ -83,3 +83,19 @@ HTTP-code 200 OK
 ```bash
     make run
 ```
+
+
+## env file fields
+`
+PORT=8000
+SENDER_EMAIL=""
+SENDER_EMAIL_PASSWORD=""
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+
+POSTGRES_HOST="go_db"
+POSTGRES_PASSWORD="postgres"
+POSTGRES_DB="postgres"
+POSTGRES_PORT="5432"
+POSTGRES_USER="postgres"
+`

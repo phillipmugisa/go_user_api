@@ -11,7 +11,7 @@ import (
 )
 
 type Storage interface {
-	GetUser(params ...string) ([]*data.User, error)
+	GetUsers(params ...string) ([]*data.User, error)
 	CreateUser(*data.User) ([]*data.User, error)
 	DeleteUser(*data.User) error
 	CompleteUserCheck(string) ([]*data.User, error)
@@ -77,7 +77,7 @@ func (s *PostgresStorage) SetUpDB() error {
 	return err
 }
 
-func (s *PostgresStorage) GetUser(params ...string) ([]*data.User, error) {
+func (s *PostgresStorage) GetUsers(params ...string) ([]*data.User, error) {
 	username := params[0]
 	email := "email"
 	if len(params) == 2 {
@@ -119,20 +119,20 @@ func (s *PostgresStorage) CreateUser(u *data.User) ([]*data.User, error) {
 		return nil, err
 	}
 
-	return s.GetUser(u.UserName)
+	return s.GetUsers(u.UserName)
 }
 func (s *PostgresStorage) CompleteUserCheck(username string) ([]*data.User, error) {
 	query := `UPDATE Users SET check_status = TRUE  WHERE username = $1`
-	_, err := s.db.Query(query, username)
+	_, err := s.db.Exec(query, username)
 	if err != nil {
 		return nil, err
 	}
-	return s.GetUser(username)
+	return s.GetUsers(username)
 }
 
 func (s *PostgresStorage) DeleteUser(u *data.User) error {
-	query := `DELETE FROM TABLE Users WHERE username = $1`
-	_, err := s.db.Query(query, u.UserName)
+	query := `DELETE FROM Users WHERE username = $1`
+	_, err := s.db.Exec(query, u.UserName)
 	if err != nil {
 		return err
 	}
