@@ -15,7 +15,7 @@ func main() {
 	listenAddr := flag.String("listenAddr", fmt.Sprintf(":%s", port), "Api Server Port")
 	flag.Parse()
 
-	store, err := storage.NewMySqlStorage()
+	store, err := storage.NewPostgresStorage()
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -20,9 +20,9 @@ Go implementation of an user account management api
 ## Set up test database
 
 ```bash
-    docker exec -it api_database bash -l
+    docker exec -it go_db bash -l
 
-    mysql -u root -p
+    psql -U postgres
 ```
 
 ## Api endpoint inside the container:

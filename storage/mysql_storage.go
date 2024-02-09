@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/phillipmugisa/go_user_api/data"
 )
 
@@ -16,26 +16,33 @@ type Storage interface {
 	CompleteUserCheck(string) ([]*data.User, error)
 }
 
-type MySqlStorage struct {
+type PostgresStorage struct {
 	db *sql.DB
 }
 
-func NewMySqlStorage() (*MySqlStorage, error) {
+func NewPostgresStorage() (*PostgresStorage, error) {
 	db, err := initDB()
 	if err != nil {
 		return nil, err
 	}
-	return &MySqlStorage{
+	return &PostgresStorage{
 		db: db,
 	}, nil
 }
 
 func initDB() (*sql.DB, error) {
+	HOST := os.Getenv("POSTGRES_HOST")
+	password := os.Getenv("POSTGRES_PASSWORD")
+	database := os.Getenv("POSTGRES_DB")
+	PORT := os.Getenv("POSTGRES_PORT")
+	username := os.Getenv("POSTGRES_USER")
+
 	// make db connection
-	dbUrl := GetConnectionString()
+	dbUrl := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		HOST, PORT, username, password, database)
 
 	fmt.Println("dbUrl: ", dbUrl)
-	db, err := sql.Open("mysql", dbUrl)
+	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		fmt.Println("ERROR: ", err)
 		return nil, errors.New("Couldnot connect to database")
@@ -48,9 +55,9 @@ func initDB() (*sql.DB, error) {
 	return db, nil
 }
 
-func (s *MySqlStorage) SetUpDB() error {
+func (s *PostgresStorage) SetUpDB() error {
 	query := `CREATE TABLE IF NOT EXISTS Users (
-		ID INT AUTO_INCREMENT PRIMARY KEY,
+		ID SERIAL PRIMARY KEY,
 		UserName VARCHAR(255) NOT NULL UNIQUE,
 		FirstName VARCHAR(255),
 		LastName VARCHAR(255),
@@ -68,19 +75,19 @@ func (s *MySqlStorage) SetUpDB() error {
 	return err
 }
 
-func (s *MySqlStorage) GetUser(username string) ([]*data.User, error) {
-	query := `SELECT username, email, code FROM Users WHERE username = ?`
+func (s *PostgresStorage) GetUser(username string) ([]*data.User, error) {
+	query := `SELECT username, email, code FROM Users WHERE username = $1`
 	rows, err := s.db.Query(query, username)
 	if err != nil {
 		return nil, err
 	}
 	return scanUsers(rows)
 }
-func (s *MySqlStorage) CreateUser(u *data.User) ([]*data.User, error) {
+func (s *PostgresStorage) CreateUser(u *data.User) ([]*data.User, error) {
 	code := u.GenerateCode()
 
 	query := `INSERT INTO Users (username, email, password, region, userLanguage, userDateBirth, firstName, lastName, phone, userGender, Code)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11);`
 
 	_, err := s.db.Query(
 		query,
@@ -102,8 +109,8 @@ func (s *MySqlStorage) CreateUser(u *data.User) ([]*data.User, error) {
 
 	return s.GetUser(u.UserName)
 }
-func (s *MySqlStorage) CompleteUserCheck(username string) ([]*data.User, error) {
-	query := `UPDATE Users SET check_status = TRUE  WHERE username = ?`
+func (s *PostgresStorage) CompleteUserCheck(username string) ([]*data.User, error) {
+	query := `UPDATE Users SET check_status = TRUE  WHERE username = $1`
 	_, err := s.db.Query(query, username)
 	if err != nil {
 		return nil, err
@@ -127,34 +134,4 @@ func scanUsers(rows *sql.Rows) ([]*data.User, error) {
 		users = append(users, user)
 	}
 	return users, nil
-}
-
-func GetConnectionString() string {
-	host := os.Getenv("DB_HOST")
-	if host == "" {
-		host = "localhost"
-	}
-
-	port := os.Getenv("DB_PORT")
-	if port == "" {
-		port = "3306"
-	}
-
-	user := os.Getenv("DB_USER")
-	if user == "" {
-		user = "root"
-	}
-
-	password := os.Getenv("DB_PASS")
-	if password == "" {
-		password = "@root"
-	}
-
-	dbName := os.Getenv("DB_NAME")
-	if dbName == "" {
-		dbName = "apiserver"
-	}
-
-	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		user, password, host, port, dbName)
 }
