@@ -86,7 +86,7 @@ HTTP-code 200 OK
 
 
 ## env file fields
-`
+```
 PORT=8000
 SENDER_EMAIL=""
 SENDER_EMAIL_PASSWORD=""
@@ -98,4 +98,4 @@ POSTGRES_PASSWORD="postgres"
 POSTGRES_DB="postgres"
 POSTGRES_PORT="5432"
 POSTGRES_USER="postgres"
-`
+```
